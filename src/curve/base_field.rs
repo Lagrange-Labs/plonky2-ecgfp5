@@ -36,7 +36,7 @@ pub trait SquareRoot: Sized {
     fn canonical_sqrt(&self) -> Option<Self>;
 }
 
-impl SquareRoot for QuinticExtension<GFp> {
+impl<F: RichField + Extendable<5> + InverseOrZero> SquareRoot for QuinticExtension<F> {
     fn sqrt(&self) -> Option<Self> {
         sqrt_quintic_ext_goldilocks(*self)
     }
@@ -56,9 +56,9 @@ impl InverseOrZero for GFp {
     }
 }
 
-impl InverseOrZero for GFp5 {
+impl<F: Extendable<5>> InverseOrZero for QuinticExtension<F> {
     fn inverse_or_zero(&self) -> Self {
-        self.try_inverse().unwrap_or(GFp5::ZERO)
+        self.try_inverse().unwrap_or(QuinticExtension::<F>::ZERO)
     }
 }
 
@@ -90,7 +90,7 @@ pub(crate) fn quintic_ext_sgn0<F: RichField + Extendable<5>>(x: QuinticExtension
 
 // returns the "canoncal" square root of x, if it exists
 // the "canonical" square root is the one such that `sgn0(sqrt(x)) == true`
-pub(crate) fn canonical_sqrt_quintic_ext_goldilocks(x: GFp5) -> Option<GFp5> {
+pub(crate) fn canonical_sqrt_quintic_ext_goldilocks<F: RichField + Extendable<5> + InverseOrZero>(x: QuinticExtension<F>) -> Option<QuinticExtension<F>> {
     match sqrt_quintic_ext_goldilocks(x) {
         Some(root_x) => {
             if quintic_ext_sgn0(root_x) {
@@ -105,15 +105,15 @@ pub(crate) fn canonical_sqrt_quintic_ext_goldilocks(x: GFp5) -> Option<GFp5> {
 
 /// returns `Some(sqrt(x))` if `x` is a square in the field, and `None` otherwise
 /// basically copied from here: https://github.com/pornin/ecquintic_ext/blob/ce059c6d1e1662db437aecbf3db6bb67fe63c716/python/ecGFp5.py#L879
-pub(crate) fn sqrt_quintic_ext_goldilocks(x: GFp5) -> Option<GFp5> {
+pub(crate) fn sqrt_quintic_ext_goldilocks<F: RichField + Extendable<5> + InverseOrZero>(x: QuinticExtension<F>) -> Option<QuinticExtension<F>> {
     let v = x.exp_power_of_2(31);
-    let d = x * v.exp_power_of_2(32) * v.try_inverse().unwrap_or(GFp5::ZERO);
+    let d = x * v.exp_power_of_2(32) * v.try_inverse().unwrap_or(QuinticExtension::<F>::ZERO);
     let e = (d * d.repeated_frobenius(2)).frobenius();
     let f = e.square();
 
     let [x0, x1, x2, x3, x4] = x.0;
     let [f0, f1, f2, f3, f4] = f.0;
-    let g = x0 * f0 + GFp::from_canonical_u64(3) * (x1 * f4 + x2 * f3 + x3 * f2 + x4 * f1);
+    let g = x0 * f0 + F::from_canonical_u64(3) * (x1 * f4 + x2 * f3 + x3 * f2 + x4 * f1);
 
     g.sqrt().map(|s| e.inverse_or_zero() * s.into())
 }

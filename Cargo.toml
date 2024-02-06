@@ -13,9 +13,9 @@ description = "plonky2 gadgets for EcGFp5 curve and base field arithmetic"
 
 [dependencies]
 plonky2 = "0.1.1"
-plonky2_field = "0.1.0"
-plonky2_ecdsa = "0.1.0"
-plonky2_u32 = "0.1.0"
+plonky2_crypto = { git = "https://github.com/nikkolasg/plonky2-crypto" , branch = "feat/serialization" }
+plonky2_ecdsa = { git = "https://github.com/nikkolasg/plonky2-ecdsa" }
+plonky2_field = { git = "https://github.com/nikkolasg/plonky2" }
 num = "0.4"
 itertools = "0.10"
 serde = "1"
@@ -35,3 +35,6 @@ harness = false
 [[bench]]
 name = "curve"
 harness = false
+
+[patch.crates-io]
+plonky2 = { git = "https://github.com/nikkolasg/plonky2" }
