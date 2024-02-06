@@ -8,13 +8,15 @@ use plonky2::iop::generator::{GeneratedValues, SimpleGenerator};
 use plonky2::iop::target::{BoolTarget, Target};
 use plonky2::iop::witness::{PartitionWitness, Witness, WitnessWrite};
 use plonky2::plonk::circuit_builder::CircuitBuilder;
+use plonky2::plonk::circuit_data::CommonCircuitData;
+use plonky2::util::serialization::{Buffer, IoError, IoResult, Read, Write};
 use plonky2_field::extension::{Extendable, FieldExtension};
 use plonky2_field::types::Field;
 use plonky2_ecdsa::gadgets::biguint::BigUintTarget;
 use plonky2_ecdsa::gadgets::nonnative::CircuitBuilderNonNative;
-use plonky2_u32::gadgets::arithmetic_u32::U32Target;
+use plonky2_crypto::u32::arithmetic_u32::U32Target;
 
-use crate::curve::base_field::SquareRoot;
+use crate::curve::base_field::{InverseOrZero, SquareRoot};
 use crate::curve::scalar_field::Scalar;
 use crate::curve::{GFp, GFp5};
 
@@ -32,6 +34,18 @@ impl QuinticExtensionTarget {
 
     pub fn to_target_array(&self) -> [Target; 5] {
         self.0
+    }
+
+    #[inline]
+    pub fn read(src: &mut Buffer) -> IoResult<Self> {
+        let limbs = src.read_target_vec()?.try_into().map_err(|_| IoError)?;
+
+        Ok(Self(limbs))
+    }
+
+    #[inline]
+    pub fn write(&self, dst: &mut Vec<u8>) -> IoResult<()> {
+        dst.write_target_vec(&self.0)
     }
 }
 
@@ -824,7 +838,29 @@ impl QuinticQuotientGenerator {
     }
 }
 
-impl<F: RichField + Extendable<5>> SimpleGenerator<F> for QuinticQuotientGenerator {
+impl<F: RichField + Extendable<5> + Extendable<D>, const D: usize> SimpleGenerator<F, D> for QuinticQuotientGenerator {
+    fn id(&self) -> String {
+        "QuinticQuotientGenerator".to_string()
+    }
+
+    fn serialize(&self, dst: &mut Vec<u8>, _common_data: &CommonCircuitData<F, D>) -> IoResult<()> {
+        self.numerator.write(dst)?;
+        self.denominator.write(dst)?;
+        self.quotient.write(dst)
+    }
+
+    fn deserialize(src: &mut Buffer, _common_data: &CommonCircuitData<F, D>) -> IoResult<Self> {
+        let numerator = QuinticExtensionTarget::read(src)?;
+        let denominator = QuinticExtensionTarget::read(src)?;
+        let quotient = QuinticExtensionTarget::read(src)?;
+
+        Ok(Self {
+            numerator,
+            denominator,
+            quotient,
+        })
+    }
+
     fn dependencies(&self) -> Vec<Target> {
         let mut deps = self.numerator.to_target_array().to_vec();
         deps.extend(self.denominator.to_target_array());
@@ -874,14 +910,37 @@ impl QuinticSqrtGenerator {
     }
 }
 
-impl SimpleGenerator<GFp> for QuinticSqrtGenerator {
+impl<F: RichField + Extendable<5> + Extendable<D> + InverseOrZero, const D: usize> SimpleGenerator<F, D> for QuinticSqrtGenerator {
+    fn id(&self) -> String {
+        "QuinticSqrtGenerator".to_string()
+    }
+
+    fn serialize(&self, dst: &mut Vec<u8>, _common_data: &CommonCircuitData<F, D>) -> IoResult<()> {
+        self.x.write(dst)?;
+        self.root_x.write(dst)?;
+        dst.write_target_bool(self.is_sqrt)
+    }
+
+    fn deserialize(src: &mut Buffer, _common_data: &CommonCircuitData<F, D>) -> IoResult<Self> {
+        let x = QuinticExtensionTarget::read(src)?;
+        let root_x = QuinticExtensionTarget::read(src)?;
+        let is_sqrt = src.read_target_bool()?;
+
+        Ok(Self {
+            x,
+            root_x,
+            is_sqrt,
+        })
+    }
+
+// impl<const D: usize> SimpleGenerator<GFp, D> for QuinticSqrtGenerator {
     fn dependencies(&self) -> Vec<Target> {
         self.x.to_target_array().to_vec()
     }
 
-    fn run_once(&self, witness: &PartitionWitness<GFp>, out_buffer: &mut GeneratedValues<GFp>) {
+    fn run_once(&self, witness: &PartitionWitness<F>, out_buffer: &mut GeneratedValues<F>) {
         let x_limbs = self.x.to_target_array().map(|t| witness.get_target(t));
-        let x = QuinticExtension::<GFp>::from_basefield_array(x_limbs);
+        let x = QuinticExtension::<F>::from_basefield_array(x_limbs);
 
         match x.canonical_sqrt() {
             Some(root_x) => {
@@ -889,17 +948,17 @@ impl SimpleGenerator<GFp> for QuinticSqrtGenerator {
                     .root_x
                     .to_target_array()
                     .into_iter()
-                    .zip(<GFp5 as FieldExtension<5>>::to_basefield_array(&root_x).into_iter())
+                    .zip(<QuinticExtension<F> as FieldExtension<5>>::to_basefield_array(&root_x).into_iter())
                 {
                     out_buffer.set_target(lhs, rhs);
                 }
-                out_buffer.set_target(self.is_sqrt.target, GFp::ONE);
+                out_buffer.set_target(self.is_sqrt.target, F::ONE);
             }
             None => {
                 for limb in self.root_x.to_target_array().into_iter() {
-                    out_buffer.set_target(limb, GFp::ZERO);
+                    out_buffer.set_target(limb, F::ZERO);
                 }
-                out_buffer.set_target(self.is_sqrt.target, GFp::ZERO);
+                out_buffer.set_target(self.is_sqrt.target, F::ZERO);
             }
         }
     }
