@@ -623,7 +623,7 @@ macro_rules! impl_circuit_builder_for_extension_degree {
                     // is_zero = is_zero && is_zero_i
 
                     // x or y = x + y - xy
-                    let is_zero_and_sign_i = self.and(is_zero_i, sign_i);
+                    let is_zero_and_sign_i = self.and(is_zero, sign_i);
                     let sign_and_is_zero_and_sign_i = self.and(sign, is_zero_and_sign_i);
                     let tmp = self.mul_const_add(
                         -GFp::ONE,
