@@ -41,9 +41,9 @@ pub(crate) struct AffinePoint {
 /// A curve point in short Weirstrass form (x, y). This is used by the in-circuit representation
 #[derive(Clone, Copy, Debug)]
 pub struct WeierstrassPoint {
-    pub(crate) x: GFp5,
-    pub(crate) y: GFp5,
-    pub(crate) is_inf: bool,
+    pub x: GFp5,
+    pub y: GFp5,
+    pub is_inf: bool,
 }
 
 impl WeierstrassPoint {
