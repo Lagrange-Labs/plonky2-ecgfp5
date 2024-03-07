@@ -2,7 +2,7 @@ use plonky2::hash::hash_types::RichField;
 use plonky2_field::{
     extension::{quintic::QuinticExtension, Extendable, FieldExtension, Frobenius},
     ops::Square,
-    types::{Field, PrimeField},
+    types::Field,
 };
 
 use super::{GFp, GFp5};

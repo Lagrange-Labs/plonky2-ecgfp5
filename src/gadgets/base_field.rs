@@ -23,7 +23,7 @@ use crate::curve::{GFp, GFp5};
 const SIX: GFp = GoldilocksField(6);
 const THREE: GFp = GoldilocksField(3);
 
-#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, Default)]
 #[repr(transparent)]
 pub struct QuinticExtensionTarget(pub [Target; 5]);
 
@@ -817,7 +817,7 @@ impl_circuit_builder_for_extension_degree!(2);
 impl_circuit_builder_for_extension_degree!(4);
 impl_circuit_builder_for_extension_degree!(5);
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct QuinticQuotientGenerator {
     numerator: QuinticExtensionTarget,
     denominator: QuinticExtensionTarget,
@@ -893,7 +893,7 @@ impl<F: RichField + Extendable<5> + Extendable<D>, const D: usize> SimpleGenerat
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct QuinticSqrtGenerator {
     x: QuinticExtensionTarget,
     root_x: QuinticExtensionTarget,
