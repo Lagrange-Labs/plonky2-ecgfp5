@@ -13,7 +13,6 @@ description = "plonky2 gadgets for EcGFp5 curve and base field arithmetic"
 
 [dependencies]
 plonky2 = "0.2.2"
-# no version 0.1.4 for plonky2_field
 plonky2_field = "0.2.2"
 plonky2_crypto = { git = "https://github.com/Lagrange-Labs/plonky2-crypto" }
 plonky2_ecdsa = { git = "https://github.com/Lagrange-Labs/plonky2-ecdsa" }
