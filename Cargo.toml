@@ -12,10 +12,10 @@ description = "plonky2 gadgets for EcGFp5 curve and base field arithmetic"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-plonky2 = "0.1.4"
+plonky2 = "0.2.2"
 # no version 0.1.4 for plonky2_field
-plonky2_field = "0.1.1"
-plonky2_crypto = { git = "https://github.com/Lagrange-Labs/plonky2-crypto" , branch = "feat/serialization" }
+plonky2_field = "0.2.2"
+plonky2_crypto = { git = "https://github.com/Lagrange-Labs/plonky2-crypto" }
 plonky2_ecdsa = { git = "https://github.com/Lagrange-Labs/plonky2-ecdsa" }
 num = "0.4"
 itertools = "0.10"
@@ -38,5 +38,5 @@ name = "curve"
 harness = false
 
 [patch.crates-io]
-plonky2 = { git = "https://github.com/Lagrange-Labs/plonky2" }
-plonky2_field = { git = "https://github.com/Lagrange-Labs/plonky2" }
+plonky2 = { git = "https://github.com/Lagrange-Labs/plonky2" , branch = "upstream" }
+plonky2_field = { git = "https://github.com/Lagrange-Labs/plonky2" , branch = "upstream" }
